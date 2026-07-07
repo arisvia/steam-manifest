@@ -7,11 +7,21 @@ name = "steam-manifest"
 version = "4.0.2"
 description = "Steam manifest parser and downloader"
 readme = "README.md"
+license = "MIT"
+keywords = ["steam", "manifest", "downloader", "parser", "vdf", "depot"]
 authors = [
     { name = "arisvia", email = "160387885+arisvia@users.noreply.github.com" }
 ]
-license = { text = "MIT" }
 requires-python = ">=3.12"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Games/Entertainment",
+]
 dependencies = [
     "aiofiles",
     "aiohttp[speedups]",
@@ -32,11 +42,25 @@ dev = [
     "pytest-cov",
     "ruff",
     "types-aiofiles",
-    "types-cachetools"
+    "types-cachetools",
 ]
 
 [project.scripts]
 steam-manifest = "steam_manifest.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/arisvia/steam-manifest"
+Repository = "https://github.com/arisvia/steam-manifest"
+Issues = "https://github.com/arisvia/steam-manifest/issues"
+
+[tool.setuptools]
+packages = ["steam_manifest", "steam_manifest.core"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.package-data]
+steam_manifest = ["assets/*.ico", "py.typed"]
 
 [tool.mypy]
 python_version = "3.12"

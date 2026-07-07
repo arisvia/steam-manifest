@@ -69,8 +69,7 @@ This is an asynchronous Python CLI tool for retrieving Steam manifest files from
 - **Entry point**: The console script `steam-manifest` is declared in `pyproject.toml` and maps to
   `steam_manifest.cli:main`. Use the console script or `python -m steam_manifest.cli` to run the CLI.
 
-- Note: `pyproject.toml` and `src/steam_manifest/core/constants.py` currently list version "4.0.2". Keep these in sync
-  when releasing.
+- **Version management**: Version is automatically read from `pyproject.toml` via `importlib.metadata`. Only update version in one place.
 
 ### Running
 

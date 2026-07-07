@@ -13,13 +13,23 @@ A high-performance asynchronous CLI tool for retrieving Steam manifest files fro
 
 ## Installation
 
+### Using uv (Recommended)
+
 ```bash
-pip install -e .
+# Install from source
+uv pip install -e .
+
+# Or install from PyPI (when published)
+uv pip install steam-manifest
 ```
 
-Or install from PyPI:
+### Using pip
 
 ```bash
+# Install from source
+pip install -e .
+
+# Or install from PyPI
 pip install steam-manifest
 ```
 

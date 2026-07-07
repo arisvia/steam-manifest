@@ -1,9 +1,10 @@
-"""常量配置模块"""
+"""Constants configuration module"""
 
+from importlib.metadata import version
 from typing import Final
 
-# 版本信息
-VERSION: Final[str] = "4.0.2"
+# Version information (synced with pyproject.toml via importlib.metadata)
+VERSION: Final[str] = version("steam-manifest")
 
 # 网络配置 - 异步优化
 DNS_SERVERS: Final[list[str]] = ["223.5.5.5"]

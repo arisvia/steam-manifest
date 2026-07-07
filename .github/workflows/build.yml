@@ -1,44 +1,58 @@
-name: 📦 CI Build
+name: 📦 Build
 
 on:
   push:
-    branches: [ "main" ]
-    paths: [ "**/*.py", "pyproject.toml" ]
+    branches: ["main"]
+    paths: ["**/*.py", "pyproject.toml"]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ "windows-latest" ]
-        python: [ "3.12", "3.13" ]
+        os: ["ubuntu-latest", "windows-latest"]
+        python: ["3.13"]
 
     steps:
       - name: 🔍 Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: 🔧 Setup Python
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
-          cache: "pip"
+
+      - name: 🔧 Setup uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          activate-environment: true
 
       - name: 💾 Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install build pyinstaller
-          pip install -e ".[dev]"
+          uv pip install build pyinstaller
+          uv pip install -e ".[dev]"
 
-      - name: 🔨 Build Wheel and Sdist
+      - name: 🧪 Run tests
+        run: pytest -v --cov=steam_manifest --cov-report=term-missing
+
+      - name: 📦 Build wheel and sdist
         run: python -m build
 
-      - name: 🔨 Build app
+      - name: 🔨 Build executable (Windows)
+        if: runner.os == 'Windows'
         run: |
           python -c "print('from steam_manifest.cli import main; main()', file=open('build_entry.py', 'w'))"
           pyinstaller --onefile --name steam-manifest --collect-all steam_manifest --icon "src/steam_manifest/assets/main.ico" build_entry.py
 
+      - name: 🔨 Build executable (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          python3 -c "print('from steam_manifest.cli import main; main()', file=open('build_entry.py', 'w'))"
+          pyinstaller --onefile --name steam-manifest --collect-all steam_manifest build_entry.py
+
       - name: 📤 Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ matrix.os }}_cp${{ matrix.python }}
+          name: ${{ matrix.os }}
           path: dist/*
