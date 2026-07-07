@@ -52,21 +52,41 @@ def show_banner() -> None:
 
 def init_command_args() -> Namespace:
     """初始化命令行参数"""
+    import os
+    
     parser = ArgumentParser(description="🚀 Steam 清单文件获取工具 v" + VERSION)
     parser.add_argument(
         "-v", "--version", action="version", version=f"%(prog)s v{VERSION}"
     )
-    parser.add_argument("-a", "--appid", help="🎮 Steam 应用ID或名称")
-    parser.add_argument("-k", "--key", help="🔑 GitHub API 访问密钥")
-    parser.add_argument("-r", "--repo", help="📁 自定义 GitHub 仓库名称")
     parser.add_argument(
-        "-f", "--fixed", action="store_true", help="📌 启用固定清单模式"
+        "-a", "--appid", 
+        help="🎮 Steam 应用ID或名称",
+    )
+    parser.add_argument(
+        "-k", "--key", 
+        help="🔑 GitHub API 访问密钥 (环境变量: STEAM_MANIFEST_GITHUB_TOKEN)",
+        default=os.getenv("STEAM_MANIFEST_GITHUB_TOKEN"),
+    )
+    parser.add_argument(
+        "-r", "--repo", 
+        help="📁 自定义 GitHub 仓库名称",
+    )
+    parser.add_argument(
+        "-f", "--fixed", 
+        action="store_true", 
+        help="📌 启用固定清单模式",
+    )
+    parser.add_argument(
+        "--steam-path",
+        type=Path,
+        help="🎮 Steam 安装路径 (环境变量: STEAM_MANIFEST_STEAM_PATH)",
+        default=Path(os.getenv("STEAM_MANIFEST_STEAM_PATH")) if os.getenv("STEAM_MANIFEST_STEAM_PATH") else None,
     )
     # 日志控制参数
     parser.add_argument(
         "--log-level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
-        default="INFO",
+        default=os.getenv("STEAM_MANIFEST_LOG_LEVEL", "INFO"),
         help="📝 日志级别 (默认: INFO)",
     )
     parser.add_argument(
@@ -81,7 +101,9 @@ def init_command_args() -> Namespace:
     )
     # 保留 -d/--debug 作为快捷方式
     parser.add_argument(
-        "-d", "--debug", action="store_true", help="🔍 调试模式 (等同于 --log-level DEBUG)"
+        "-d", "--debug", 
+        action="store_true", 
+        help="🔍 调试模式 (等同于 --log-level DEBUG)",
     )
     return parser.parse_args()
 
@@ -130,9 +152,10 @@ async def async_main() -> None:
     )
 
     # 验证Steam路径
-    steam_path = verify_steam_path()
+    steam_path = args.steam_path or verify_steam_path()
     if not steam_path:
         log.error("❌ 未找到Steam安装路径")
+        log.info("💡 可通过 --steam-path 参数或 STEAM_MANIFEST_STEAM_PATH 环境变量指定")
         return
 
     log.info(f"🎮 已定位Steam安装路径: {steam_path}")
