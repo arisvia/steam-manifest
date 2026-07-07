@@ -6,14 +6,13 @@ from argparse import ArgumentParser, Namespace
 from contextlib import suppress
 from pathlib import Path
 from time import sleep
-from typing import Any
 
-from loguru import logger
 from rich.console import Console
 from rich.text import Text
 
 from steam_manifest.core.constants import VERSION, Steam
 from steam_manifest.core.github import GitHubRepo
+from steam_manifest.core.loghelper import log, setup_logger
 from steam_manifest.core.network import HttpClient
 from steam_manifest.core.steam import SteamApp
 from steam_manifest.core.storage import ManifestStorage
@@ -51,21 +50,6 @@ def show_banner() -> None:
     console.print(content)
 
 
-def init_logger(debug: bool = False) -> Any:
-    """初始化日志系统"""
-    logger.remove()
-
-    # 终端日志格式
-    log_format = "<green>{time:HH:mm:ss}</green> | <level>{level: <8}</level> | <level>{message}</level>"
-
-    if debug:
-        logger.add(sys.stderr, format=log_format, level="DEBUG")
-    else:
-        logger.add(sys.stderr, format=log_format, level="INFO")
-
-    return logger
-
-
 def init_command_args() -> Namespace:
     """初始化命令行参数"""
     parser = ArgumentParser(description="🚀 Steam 清单文件获取工具 v" + VERSION)
@@ -78,7 +62,27 @@ def init_command_args() -> Namespace:
     parser.add_argument(
         "-f", "--fixed", action="store_true", help="📌 启用固定清单模式"
     )
-    parser.add_argument("-d", "--debug", action="store_true", help="🔍 调试模式")
+    # 日志控制参数
+    parser.add_argument(
+        "--log-level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        default="INFO",
+        help="📝 日志级别 (默认: INFO)",
+    )
+    parser.add_argument(
+        "--log-dir",
+        type=Path,
+        help="📂 日志文件目录 (默认: ./logs)",
+    )
+    parser.add_argument(
+        "--no-log",
+        action="store_true",
+        help="🚫 禁用日志输出",
+    )
+    # 保留 -d/--debug 作为快捷方式
+    parser.add_argument(
+        "-d", "--debug", action="store_true", help="🔍 调试模式 (等同于 --log-level DEBUG)"
+    )
     return parser.parse_args()
 
 
@@ -112,15 +116,26 @@ async def async_main() -> None:
 
     # 初始化
     args = init_command_args()
-    init_logger(args.debug)
+    
+    # 配置日志系统
+    log_level = "DEBUG" if args.debug else args.log_level
+    console_enable = not args.no_log
+    file_enable = not args.no_log
+    
+    setup_logger(
+        log_level=log_level,
+        log_dir=args.log_dir,
+        console_enable=console_enable,
+        file_enable=file_enable,
+    )
 
     # 验证Steam路径
     steam_path = verify_steam_path()
     if not steam_path:
-        logger.error("❌ 未找到Steam安装路径")
+        log.error("❌ 未找到Steam安装路径")
         return
 
-    logger.info(f"🎮 已定位Steam安装路径: {steam_path}")
+    log.info(f"🎮 已定位Steam安装路径: {steam_path}")
 
     # 创建异步客户端和管理器
     async with HttpClient() as api_client:
@@ -139,13 +154,13 @@ async def async_main() -> None:
 
             # 检查API速率限制 (移到用户输入之后，避免网络卡顿影响交互)
             if not await github_repo.check_rate_limit():
-                logger.error("❌ API请求次数已达上限，请稍后再试")
+                log.error("❌ API请求次数已达上限，请稍后再试")
                 return
 
             app_id = await steam_app.search_app(app_query)
 
             if not app_id:
-                logger.error("❌ 无法获取应用ID")
+                log.error("❌ 无法获取应用ID")
                 return
 
             app_id_str = str(app_id)
@@ -157,7 +172,7 @@ async def async_main() -> None:
             repo = await github_repo.find_repository(app_id_str, custom_repos)
 
             if not repo:
-                logger.error(f"❌ 未找到包含应用 {app_id_str} 的仓库")
+                log.error(f"❌ 未找到包含应用 {app_id_str} 的仓库")
                 return
 
             # 获取应用详情
@@ -166,17 +181,17 @@ async def async_main() -> None:
             # 获取文件列表
             files = await github_repo.fetch_repository_files(repo, app_id_str)
             if not files:
-                logger.error("❌ 无法获取仓库文件")
+                log.error("❌ 无法获取仓库文件")
                 return
 
             # 并发处理所有文件
-            logger.info("⏳ 正在处理仓库文件...")
+            log.info("⏳ 正在处理仓库文件...")
             success = await github_repo.process_files(
                 repo, app_id_str, files, steam_path
             )
 
             if not success:
-                logger.warning("❗ 部分文件处理失败")
+                log.warning("❗ 部分文件处理失败")
 
             # 保存配置
             save_success = await storage.save_lua_config(
@@ -187,13 +202,13 @@ async def async_main() -> None:
             )
 
             if save_success:
-                logger.info(f"✅ 操作完成！应用: {steam_app.app_name or app_id_str}")
+                log.info(f"✅ 操作完成！应用: {steam_app.app_name or app_id_str}")
             else:
-                logger.error("❌ 保存配置失败")
+                log.error("❌ 保存配置失败")
 
             # 处理DLC
             if steam_app.dlc_ids:
-                logger.info(f"🎯 检测到 {len(steam_app.dlc_ids)} 个DLC，正在处理...")
+                log.info(f"🎯 检测到 {len(steam_app.dlc_ids)} 个DLC，正在处理...")
 
                 # 为DLC复用资源
                 dlc_storage = ManifestStorage()
@@ -225,17 +240,17 @@ async def async_main() -> None:
                                 steam_path,
                                 args.fixed,
                             )
-                            logger.info(f"✅ DLC {dlc_id_str} 处理完成")
+                            log.info(f"✅ DLC {dlc_id_str} 处理完成")
                     else:
-                        logger.warning(f"❗ 未找到 DLC {dlc_id_str} 的仓库")
+                        log.warning(f"❗ 未找到 DLC {dlc_id_str} 的仓库")
 
         except KeyboardInterrupt:
-            logger.warning("❗ 操作已被用户中断")
+            log.warning("❗ 操作已被用户中断")
             sys.exit(1)
         except Exception as e:
-            logger.error(f"❌ 发生异常: {str(e)}")
+            log.error(f"❌ 发生异常: {str(e)}")
             if args.debug:
-                logger.exception("异常详情:")
+                log.exception("异常详情:")
             sys.exit(1)
 
     # 完成提示

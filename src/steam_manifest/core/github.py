@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 from typing import Any, cast
 
-from loguru import logger
+from steam_manifest.core.loghelper import log
 from rich.progress import (
     BarColumn,
     Progress,
@@ -38,7 +38,7 @@ class GitHubRepo:
             result = await self.api_client.get(Urls.GITHUB_RATE_LIMIT)
 
             if not result or "rate" not in result:
-                logger.warning("❗ 无法获取API限制信息")
+                log.warning("❗ 无法获取API限制信息")
                 return True
 
             rate_info = result["rate"]
@@ -51,10 +51,10 @@ class GitHubRepo:
                 "reset_time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(reset)),
             }
 
-            logger.info(f"📊 GitHub API - 剩余请求: {remaining}")
+            log.info(f"📊 GitHub API - 剩余请求: {remaining}")
 
             if remaining == 0:
-                logger.error(
+                log.error(
                     f"❌ API请求已达上限，重置时间: {self.rate_limit_info['reset_time']}"
                 )
                 return False
@@ -62,7 +62,7 @@ class GitHubRepo:
             return True
 
         except Exception as e:
-            logger.error(f"❗ 检查速率限制异常: {str(e)}")
+            log.error(f"❗ 检查速率限制异常: {str(e)}")
             return True
 
     async def find_repository(
@@ -102,10 +102,10 @@ class GitHubRepo:
 
         if latest_repo:
             self.current_repo = latest_repo
-            logger.info(f"📦 选中仓库: {latest_repo}")
+            log.info(f"📦 选中仓库: {latest_repo}")
             return latest_repo
         else:
-            logger.error(f"❌ 未在仓库中找到应用: {app_id}")
+            log.error(f"❌ 未在仓库中找到应用: {app_id}")
             return None
 
     async def _check_repo_branch(
@@ -122,14 +122,14 @@ class GitHubRepo:
 
             if result and "commit" in result:
                 date = result["commit"]["commit"]["committer"]["date"]
-                logger.debug(f"✅ 仓库 {repo} 中找到分支 {branch}")
+                log.debug(f"✅ 仓库 {repo} 中找到分支 {branch}")
                 return True, date
             else:
-                logger.debug(f"❌ 仓库 {repo} 中未找到分支 {branch}")
+                log.debug(f"❌ 仓库 {repo} 中未找到分支 {branch}")
                 return False, None
 
         except Exception as e:
-            logger.debug(f"❗ 检查仓库 {repo} 异常: {str(e)}")
+            log.debug(f"❗ 检查仓库 {repo} 异常: {str(e)}")
             return False, None
 
     async def fetch_repository_files(
@@ -150,7 +150,7 @@ class GitHubRepo:
             branch_data = await self.api_client.get(branch_url)
 
             if not branch_data or "commit" not in branch_data:
-                logger.warning(f"❗ 无法获取分支信息: {repo}/{branch}")
+                log.warning(f"❗ 无法获取分支信息: {repo}/{branch}")
                 return None
 
             # 获取文件树
@@ -158,16 +158,16 @@ class GitHubRepo:
             tree_data = await self.api_client.get(tree_url)
 
             if not tree_data or "tree" not in tree_data:
-                logger.warning(f"❗ 无法获取文件树: {repo}/{branch}")
+                log.warning(f"❗ 无法获取文件树: {repo}/{branch}")
                 return None
 
             files_any = tree_data["tree"]
             files = cast(list[dict[str, Any]], files_any)
-            logger.info(f"📂 获取到 {len(files)} 个文件")
+            log.info(f"📂 获取到 {len(files)} 个文件")
             return files
 
         except Exception as e:
-            logger.error(f"❌ 获取文件列表失败: {str(e)}")
+            log.error(f"❌ 获取文件列表失败: {str(e)}")
             return None
 
     async def process_files(
@@ -222,7 +222,7 @@ class GitHubRepo:
         # 检查是否有失败
         failures = sum(1 for r in results if isinstance(r, Exception) or not r)
         if failures > 0:
-            logger.warning(f"❗ {failures}/{len(files)} 个文件处理失败")
+            log.warning(f"❗ {failures}/{len(files)} 个文件处理失败")
 
         return failures == 0
 
@@ -252,7 +252,7 @@ class GitHubRepo:
             return True
 
         except Exception as e:
-            logger.debug(f"❗ 处理文件异常: {str(e)}")
+            log.debug(f"❗ 处理文件异常: {str(e)}")
             return False
 
     async def _handle_manifest(
@@ -270,7 +270,7 @@ class GitHubRepo:
                 return success
             return False
         except Exception as e:
-            logger.debug(f"❗ 处理清单文件 {path} 失败: {str(e)}")
+            log.debug(f"❗ 处理清单文件 {path} 失败: {str(e)}")
             return False
 
     async def _handle_vdf(self, repo: str, branch: str, path: str) -> bool:
@@ -290,7 +290,7 @@ class GitHubRepo:
 
             return True
         except Exception as e:
-            logger.debug(f"❗ 处理VDF文件 {path} 失败: {str(e)}")
+            log.debug(f"❗ 处理VDF文件 {path} 失败: {str(e)}")
             return False
 
     async def _handle_config(self, repo: str, branch: str, path: str) -> bool:
@@ -304,7 +304,7 @@ class GitHubRepo:
                 return True
             return False
         except Exception as e:
-            logger.debug(f"❗ 处理配置文件 {path} 失败: {str(e)}")
+            log.debug(f"❗ 处理配置文件 {path} 失败: {str(e)}")
             return False
 
     def clear(self) -> None:

@@ -2,11 +2,12 @@
 Tests for CLI module.
 """
 import sys
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from steam_manifest.cli import init_command_args, init_logger, main, show_banner
+from steam_manifest.cli import init_command_args, main, show_banner
 
 
 def test_init_command_args_with_appid():
@@ -40,26 +41,79 @@ def test_init_command_args_with_all_options():
         assert args.debug is True
 
 
-def test_init_logger_debug_mode():
-    """Test logger initialization in debug mode."""
-    with patch("steam_manifest.cli.logger") as mock_logger:
-        init_logger(debug=True)
-        mock_logger.remove.assert_called_once()
-        mock_logger.add.assert_called_once()
-        # Check that DEBUG level was set
-        call_args = mock_logger.add.call_args
-        assert call_args[1]["level"] == "DEBUG"
+def test_init_command_args_with_log_options():
+    """Test CLI argument parsing with log options."""
+    with patch(
+        "sys.argv",
+        ["steam-manifest", "-a", "480", "--log-level", "DEBUG", "--log-dir", "/tmp/logs"],
+    ):
+        args = init_command_args()
+        assert args.appid == "480"
+        assert args.log_level == "DEBUG"
+        assert args.log_dir == Path("/tmp/logs")
 
 
-def test_init_logger_info_mode():
-    """Test logger initialization in info mode."""
-    with patch("steam_manifest.cli.logger") as mock_logger:
-        init_logger(debug=False)
+def test_init_command_args_with_no_log():
+    """Test CLI argument parsing with --no-log flag."""
+    with patch("sys.argv", ["steam-manifest", "-a", "480", "--no-log"]):
+        args = init_command_args()
+        assert args.appid == "480"
+        assert args.no_log is True
+
+
+def test_setup_logger_debug_mode():
+    """Test logger setup in debug mode."""
+    from steam_manifest.core.loghelper import setup_logger
+    
+    with patch("steam_manifest.core.loghelper.logger") as mock_logger:
+        setup_logger(log_level="DEBUG")
         mock_logger.remove.assert_called_once()
-        mock_logger.add.assert_called_once()
-        # Check that INFO level was set
-        call_args = mock_logger.add.call_args
-        assert call_args[1]["level"] == "INFO"
+        # Should add both console and file handlers
+        assert mock_logger.add.call_count == 2
+
+
+def test_setup_logger_info_mode():
+    """Test logger setup in info mode."""
+    from steam_manifest.core.loghelper import setup_logger
+    
+    with patch("steam_manifest.core.loghelper.logger") as mock_logger:
+        setup_logger(log_level="INFO")
+        mock_logger.remove.assert_called_once()
+        # Should add both console and file handlers
+        assert mock_logger.add.call_count == 2
+
+
+def test_setup_logger_no_console():
+    """Test logger setup with console disabled."""
+    from steam_manifest.core.loghelper import setup_logger
+    
+    with patch("steam_manifest.core.loghelper.logger") as mock_logger:
+        setup_logger(log_level="INFO", console_enable=False)
+        mock_logger.remove.assert_called_once()
+        # Should only add file handler
+        assert mock_logger.add.call_count == 1
+
+
+def test_setup_logger_no_file():
+    """Test logger setup with file disabled."""
+    from steam_manifest.core.loghelper import setup_logger
+    
+    with patch("steam_manifest.core.loghelper.logger") as mock_logger:
+        setup_logger(log_level="INFO", file_enable=False)
+        mock_logger.remove.assert_called_once()
+        # Should only add console handler
+        assert mock_logger.add.call_count == 1
+
+
+def test_setup_logger_both_disabled():
+    """Test logger setup with both console and file disabled."""
+    from steam_manifest.core.loghelper import setup_logger
+    
+    with patch("steam_manifest.core.loghelper.logger") as mock_logger:
+        setup_logger(log_level="INFO", console_enable=False, file_enable=False)
+        mock_logger.remove.assert_called_once()
+        # Should not add any handlers
+        mock_logger.add.assert_not_called()
 
 
 def test_show_banner(capsys):

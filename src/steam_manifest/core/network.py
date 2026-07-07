@@ -7,7 +7,7 @@ import aiohttp
 import orjson
 from aiohttp.resolver import AsyncResolver
 from cachetools import TTLCache
-from loguru import logger
+from steam_manifest.core.loghelper import log
 from tenacity import (
     AsyncRetrying,
     RetryError,
@@ -72,14 +72,14 @@ class HttpClient:
             json_serialize=lambda x: orjson.dumps(x).decode(),
             trust_env=True,  # 自动读取系统环境变量代理设置 (HTTP_PROXY, HTTPS_PROXY)
         )
-        logger.debug("✨ 异步API客户端已初始化")
+        log.debug("✨ 异步API客户端已初始化")
 
     async def close(self) -> None:
         """关闭会话"""
         if self.session:
             await self.session.close()
-            logger.debug("✨ 异步API客户端已关闭")
-        logger.info(
+            log.debug("✨ 异步API客户端已关闭")
+        log.info(
             f"📊 API统计 - 请求总数: {self.request_count}, "
             f"📊 缓存命中: {self.cache_hits}, "
             f"📊 命中率: {self.cache_hits / max(self.request_count, 1) * 100:.1f}%"
@@ -106,7 +106,7 @@ class HttpClient:
         # 检查缓存（仅GET请求）
         if method.upper() == "GET" and url in self.cache:
             self.cache_hits += 1
-            logger.debug(f"💾 缓存命中: {url}")
+            log.debug(f"💾 缓存命中: {url}")
             # cache stores Any, but callers expect dict[str, Any]
             return cast(dict[str, Any], self.cache[url])
 
@@ -117,7 +117,7 @@ class HttpClient:
         # make a local copy and guard it for typing.
         session = self.session
         if session is None:
-            logger.error("❌ HTTP session is not initialized")
+            log.error("❌ HTTP session is not initialized")
             return None
 
         try:
@@ -142,17 +142,17 @@ class HttpClient:
                             return data
                         elif response.status == 429:  # Rate limit
                             reset_time = response.headers.get("X-RateLimit-Reset")
-                            logger.warning(f"⏱️ API速率限制，重置时间: {reset_time}")
+                            log.warning(f"⏱️ API速率限制，重置时间: {reset_time}")
                             raise aiohttp.ClientError("Rate limited")
                         else:
-                            logger.warning(f"❗ 请求失败 [{response.status}]: {url}")
+                            log.warning(f"❗ 请求失败 [{response.status}]: {url}")
                             raise aiohttp.ClientError(f"HTTP {response.status}")
 
         except RetryError:
-            logger.error(f"❌ 请求失败（已重试{RETRY_TIMES}次）: {url}")
+            log.error(f"❌ 请求失败（已重试{RETRY_TIMES}次）: {url}")
             return None
         except Exception as e:
-            logger.error(f"❌ 请求异常: {str(e)}")
+            log.error(f"❌ 请求异常: {str(e)}")
             return None
         # explicit fall-through return for mypy
         return None
@@ -170,7 +170,7 @@ class HttpClient:
 
         session = self.session
         if session is None:
-            logger.error("❌ HTTP session is not initialized")
+            log.error("❌ HTTP session is not initialized")
             return None
 
         try:
@@ -190,10 +190,10 @@ class HttpClient:
                             raise aiohttp.ClientError(f"HTTP {response.status}")
 
         except RetryError:
-            logger.error(f"❌ 下载失败（已重试{RETRY_TIMES}次）: {url}")
+            log.error(f"❌ 下载失败（已重试{RETRY_TIMES}次）: {url}")
             return None
         except Exception as e:
-            logger.error(f"❌ 下载异常: {str(e)}")
+            log.error(f"❌ 下载异常: {str(e)}")
             return None
         # explicit fall-through return for mypy
         return None
@@ -227,4 +227,4 @@ class HttpClient:
     def clear_cache(self) -> None:
         """清空缓存"""
         self.cache.clear()
-        logger.debug("🗑️ 缓存已清空")
+        log.debug("🗑️ 缓存已清空")

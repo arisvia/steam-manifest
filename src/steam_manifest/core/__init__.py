@@ -19,6 +19,7 @@ from steam_manifest.core.constants import (
     Urls,
 )
 from steam_manifest.core.github import GitHubRepo
+from steam_manifest.core.loghelper import log
 from steam_manifest.core.network import HttpClient
 from steam_manifest.core.steam import SteamApp
 from steam_manifest.core.storage import ManifestStorage
@@ -46,4 +47,6 @@ __all__ = [
     "ManifestStorage",
     "SteamApp",
     "GitHubRepo",
+    # Logger
+    "log",
 ]

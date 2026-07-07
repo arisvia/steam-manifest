@@ -1,6 +1,6 @@
 """Steam应用信息管理模块"""
 
-from loguru import logger
+from steam_manifest.core.loghelper import log
 from rich.console import Console
 from rich.table import Table
 
@@ -37,19 +37,19 @@ class SteamApp:
             result = await self.api_client.get(search_url)
 
             if not result or "items" not in result:
-                logger.error("❌ 未找到匹配的应用")
+                log.error("❌ 未找到匹配的应用")
                 return None
 
             items = result["items"]
             if not items:
-                logger.error("❌ 搜索结果为空")
+                log.error("❌ 搜索结果为空")
                 return None
 
             # 如果只有一个结果，直接选择
             if len(items) == 1:
                 app_id = int(items[0]["id"])
                 self.app_id = str(app_id)
-                logger.info(f"✨ 已选择应用: [{app_id}] {items[0]['name']}")
+                log.info(f"✨ 已选择应用: [{app_id}] {items[0]['name']}")
                 return app_id
 
             # 多个结果，显示列表
@@ -74,17 +74,17 @@ class SteamApp:
                     if 0 <= choice_idx < len(items[:10]):
                         app_id = int(items[choice_idx]["id"])
                         self.app_id = str(app_id)
-                        logger.info(
+                        log.info(
                             f"✨ 已选择应用: [{app_id}] {items[choice_idx]['name']}"
                         )
                         return app_id
                     else:
-                        logger.warning("❗ 输入无效，请重新选择")
+                        log.warning("❗ 输入无效，请重新选择")
                 except (ValueError, KeyboardInterrupt):
-                    logger.warning("❗ 输入无效，请重新选择")
+                    log.warning("❗ 输入无效，请重新选择")
 
         except Exception as e:
-            logger.error(f"❌ 搜索应用失败: {str(e)}")
+            log.error(f"❌ 搜索应用失败: {str(e)}")
             return None
 
     async def fetch_app_details(self, app_id: str) -> bool:
@@ -101,12 +101,12 @@ class SteamApp:
             result = await self.api_client.get(detail_url)
 
             if not result or not isinstance(result, dict):
-                logger.warning("❗ 无法获取应用详情")
+                log.warning("❗ 无法获取应用详情")
                 return False
 
             app_data = result.get(app_id, {})
             if not app_data.get("success"):
-                logger.warning(f"❗ 应用 {app_id} 不存在或无法访问")
+                log.warning(f"❗ 应用 {app_id} 不存在或无法访问")
                 return False
 
             data = app_data.get("data", {})
@@ -114,15 +114,15 @@ class SteamApp:
             self.dlc_ids = data.get("dlc", [])
 
             if self.app_name:
-                logger.info(f"📦 应用名称: {self.app_name}")
+                log.info(f"📦 应用名称: {self.app_name}")
 
             if self.dlc_ids:
-                logger.info(f"🎮 发现 {len(self.dlc_ids)} 个DLC")
+                log.info(f"🎮 发现 {len(self.dlc_ids)} 个DLC")
 
             return True
 
         except Exception as e:
-            logger.error(f"❌ 获取应用详情失败: {str(e)}")
+            log.error(f"❌ 获取应用详情失败: {str(e)}")
             return False
 
     async def batch_fetch_dlc_details(self, dlc_ids: list[int]) -> dict[int, str]:

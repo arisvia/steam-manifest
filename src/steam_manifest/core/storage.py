@@ -6,7 +6,7 @@ from typing import Any, cast
 
 import aiofiles
 import vdf
-from loguru import logger
+from steam_manifest.core.loghelper import log
 
 from steam_manifest.core.constants import Steam
 
@@ -35,10 +35,10 @@ class ManifestStorage:
             )
             appinfo_config = cast(dict[str, Any], appinfo_config_any)
             appname = str(appinfo_config.get("common", {}).get("name", "Unknown"))
-            logger.info(f"📦 应用名称: {appname}")
+            log.info(f"📦 应用名称: {appname}")
             return appname
         except Exception as e:
-            logger.error(f"⛔ 解析 appinfo.vdf 失败: {str(e)}")
+            log.error(f"⛔ 解析 appinfo.vdf 失败: {str(e)}")
             return None
 
     async def parse_depot_key(self, content: bytes) -> bool:
@@ -70,10 +70,10 @@ class ManifestStorage:
                     continue
 
             if self.depots:
-                logger.info(f"🔑 已找到 {len(self.depots)} 个解密密钥")
+                log.info(f"🔑 已找到 {len(self.depots)} 个解密密钥")
             return True
         except Exception as e:
-            logger.error(f"⛔ 解析 key.vdf 失败: {str(e)}")
+            log.error(f"⛔ 解析 key.vdf 失败: {str(e)}")
             return False
 
     async def parse_config_json(
@@ -92,16 +92,16 @@ class ManifestStorage:
             packagedlcs: list[int] = config_data.get("packagedlcs", [])
 
             if dlcs:
-                logger.info(f"🎮 检测到 {len(dlcs)} 个DLC")
+                log.info(f"🎮 检测到 {len(dlcs)} 个DLC")
                 for dlc_id in dlcs:
                     self.depots[dlc_id] = None
 
             if packagedlcs:
-                logger.info(f"🎯 检测到 {len(packagedlcs)} 个独立DLC")
+                log.info(f"🎯 检测到 {len(packagedlcs)} 个独立DLC")
 
             return dlcs, packagedlcs
         except Exception as e:
-            logger.error(f"❌ 解析配置文件失败: {str(e)}")
+            log.error(f"❌ 解析配置文件失败: {str(e)}")
             return [], []
 
     async def save_manifest_file(
@@ -123,7 +123,7 @@ class ManifestStorage:
 
             # 如果文件已存在，跳过
             if save_path.exists():
-                logger.debug(f"⏭️ 清单文件已存在: {path}")
+                log.debug(f"⏭️ 清单文件已存在: {path}")
                 return True
 
             # 创建目录
@@ -136,12 +136,12 @@ class ManifestStorage:
 
             # 原子替换
             temp_path.replace(save_path)
-            logger.info(f"📥 清单文件已保存: {path}")
+            log.info(f"📥 清单文件已保存: {path}")
             self.manifests.append(path)
             return True
 
         except Exception as e:
-            logger.error(f"❌ 保存清单文件失败 {path}: {str(e)}")
+            log.error(f"❌ 保存清单文件失败 {path}: {str(e)}")
             return False
 
     async def save_lua_config(
@@ -195,11 +195,11 @@ class ManifestStorage:
                 await f.write(lua_content)
 
             temp_filepath.replace(lua_filepath)
-            logger.info(f"📝 配置已保存至: {lua_filepath}")
+            log.info(f"📝 配置已保存至: {lua_filepath}")
             return True
 
         except Exception as e:
-            logger.error(f"❌ 保存Lua配置失败: {str(e)}")
+            log.error(f"❌ 保存Lua配置失败: {str(e)}")
             return False
 
     def _parse_manifest_ids(self) -> dict[int, str]:
