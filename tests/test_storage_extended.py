@@ -10,7 +10,6 @@ target the real API.
 """
 
 import asyncio
-import json
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
@@ -18,7 +17,6 @@ import pytest
 
 from steam_manifest.core.constants import Steam
 from steam_manifest.core.storage import ManifestStorage
-
 
 # ---------------------------------------------------------------------------
 # save_manifest_file
@@ -137,7 +135,11 @@ async def test_save_lua_config_sorted_depots(tmp_path):
 
     text = (tmp_path / Steam.PLUGIN_DIR / "app.lua").read_text(encoding="utf-8")
     # 排序：100 在 200 前，200 在 300 前
-    assert text.index("addappid(100") < text.index("addappid(200") < text.index("addappid(300")
+    assert (
+        text.index("addappid(100")
+        < text.index("addappid(200")
+        < text.index("addappid(300")
+    )
 
 
 @pytest.mark.asyncio
@@ -340,9 +342,7 @@ async def test_save_lua_config_full_content_snapshot(tmp_path):
     storage.depots = {100: "KEY1", 200: None}
     storage.manifests = ["100_aabbcc.manifest"]
 
-    await storage.save_lua_config(
-        "999", "TestApp", tmp_path, use_fixed_manifest=True
-    )
+    await storage.save_lua_config("999", "TestApp", tmp_path, use_fixed_manifest=True)
 
     text = (tmp_path / Steam.PLUGIN_DIR / "999.lua").read_text(encoding="utf-8")
     expected = (

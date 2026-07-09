@@ -6,11 +6,11 @@ clear_cache, and the async context-manager protocol.
 
 Uses pytest + unittest.mock + AsyncMock.
 """
+
 import asyncio
 from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import aiohttp
 import pytest
 
 import steam_manifest.core.network as network_mod
@@ -58,7 +58,9 @@ class FakeSession:
             return None
         self._call_count += 1
         # Repeat last response if exhausted (for retry scenarios).
-        return self._responses[0] if len(self._responses) == 1 else self._responses.pop(0)
+        return (
+            self._responses[0] if len(self._responses) == 1 else self._responses.pop(0)
+        )
 
     def request(self, method, url, **kwargs):
         return self._next()
@@ -128,7 +130,7 @@ async def test_request_retries_on_timeout_error(fast_retries):
     async def ctx(method, url, **kw):
         call_count["n"] += 1
         if call_count["n"] < 2:
-            raise asyncio.TimeoutError()
+            raise TimeoutError()
         yield good
 
     session.request = ctx
@@ -149,7 +151,7 @@ async def test_request_timeout_exhausted_returns_none(no_retries):
 
     @asynccontextmanager
     async def ctx(method, url, **kw):
-        raise asyncio.TimeoutError()
+        raise TimeoutError()
         yield  # pragma: no cover - unreachable
 
     session.request = ctx
@@ -258,8 +260,10 @@ async def test_request_returns_none_when_session_still_none(no_retries):
 @pytest.mark.asyncio
 async def test_aenter_aexit_context_manager():
     """__aenter__ initializes, __aexit__ closes the session."""
-    with patch.object(HttpClient, "initialize", new=AsyncMock()) as mock_init, \
-         patch.object(HttpClient, "close", new=AsyncMock()) as mock_close:
+    with (
+        patch.object(HttpClient, "initialize", new=AsyncMock()) as mock_init,
+        patch.object(HttpClient, "close", new=AsyncMock()) as mock_close,
+    ):
         client = HttpClient()
         returned = await client.__aenter__()
         assert returned is client
@@ -333,7 +337,7 @@ async def test_raw_get_timeout_returns_none(no_retries):
 
     @asynccontextmanager
     async def ctx(url):
-        raise asyncio.TimeoutError()
+        raise TimeoutError()
         yield  # pragma: no cover
 
     session.get = ctx
@@ -437,9 +441,11 @@ async def test_batch_get_handles_none_responses():
 @pytest.mark.asyncio
 async def test_initialize_creates_session():
     """initialize() builds an aiohttp session with connector + timeout."""
-    with patch.object(network_mod.aiohttp, "ClientSession") as mock_session_cls, \
-         patch.object(network_mod.aiohttp, "TCPConnector") as mock_connector_cls, \
-         patch.object(network_mod, "AsyncResolver") as mock_resolver_cls:
+    with (
+        patch.object(network_mod.aiohttp, "ClientSession") as mock_session_cls,
+        patch.object(network_mod.aiohttp, "TCPConnector") as mock_connector_cls,
+        patch.object(network_mod, "AsyncResolver") as mock_resolver_cls,
+    ):
         client = HttpClient()
         await client.initialize()
 

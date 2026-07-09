@@ -1,7 +1,7 @@
 """
 Tests for CLI module.
 """
-import sys
+
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -31,7 +31,17 @@ def test_init_command_args_with_all_options():
     """Test CLI argument parsing with all options."""
     with patch(
         "sys.argv",
-        ["steam-manifest", "-a", "480", "-k", "token123", "-r", "custom/repo", "-f", "-d"],
+        [
+            "steam-manifest",
+            "-a",
+            "480",
+            "-k",
+            "token123",
+            "-r",
+            "custom/repo",
+            "-f",
+            "-d",
+        ],
     ):
         args = init_command_args()
         assert args.appid == "480"
@@ -45,7 +55,15 @@ def test_init_command_args_with_log_options():
     """Test CLI argument parsing with log options."""
     with patch(
         "sys.argv",
-        ["steam-manifest", "-a", "480", "--log-level", "DEBUG", "--log-dir", "/tmp/logs"],
+        [
+            "steam-manifest",
+            "-a",
+            "480",
+            "--log-level",
+            "DEBUG",
+            "--log-dir",
+            "/tmp/logs",
+        ],
     ):
         args = init_command_args()
         assert args.appid == "480"
@@ -64,7 +82,7 @@ def test_init_command_args_with_no_log():
 def test_setup_logger_debug_mode():
     """Test logger setup in debug mode."""
     from steam_manifest.core.loghelper import setup_logger
-    
+
     with patch("steam_manifest.core.loghelper.logger") as mock_logger:
         setup_logger(log_level="DEBUG")
         mock_logger.remove.assert_called_once()
@@ -75,7 +93,7 @@ def test_setup_logger_debug_mode():
 def test_setup_logger_info_mode():
     """Test logger setup in info mode."""
     from steam_manifest.core.loghelper import setup_logger
-    
+
     with patch("steam_manifest.core.loghelper.logger") as mock_logger:
         setup_logger(log_level="INFO")
         mock_logger.remove.assert_called_once()
@@ -86,7 +104,7 @@ def test_setup_logger_info_mode():
 def test_setup_logger_no_console():
     """Test logger setup with console disabled."""
     from steam_manifest.core.loghelper import setup_logger
-    
+
     with patch("steam_manifest.core.loghelper.logger") as mock_logger:
         setup_logger(log_level="INFO", console_enable=False)
         mock_logger.remove.assert_called_once()
@@ -97,7 +115,7 @@ def test_setup_logger_no_console():
 def test_setup_logger_no_file():
     """Test logger setup with file disabled."""
     from steam_manifest.core.loghelper import setup_logger
-    
+
     with patch("steam_manifest.core.loghelper.logger") as mock_logger:
         setup_logger(log_level="INFO", file_enable=False)
         mock_logger.remove.assert_called_once()
@@ -108,7 +126,7 @@ def test_setup_logger_no_file():
 def test_setup_logger_both_disabled():
     """Test logger setup with both console and file disabled."""
     from steam_manifest.core.loghelper import setup_logger
-    
+
     with patch("steam_manifest.core.loghelper.logger") as mock_logger:
         setup_logger(log_level="INFO", console_enable=False, file_enable=False)
         mock_logger.remove.assert_called_once()
@@ -126,13 +144,14 @@ def test_show_banner(capsys):
 @pytest.mark.asyncio
 async def test_main_with_valid_workflow():
     """Test main workflow with mocked dependencies."""
-    with patch("sys.argv", ["steam-manifest", "-a", "480"]), \
-         patch("steam_manifest.cli.verify_steam_path") as mock_verify, \
-         patch("steam_manifest.cli.HttpClient") as mock_client_class, \
-         patch("steam_manifest.cli.ManifestStorage") as mock_storage_class, \
-         patch("steam_manifest.cli.SteamApp") as mock_steam_class, \
-         patch("steam_manifest.cli.GitHubRepo") as mock_github_class:
-
+    with (
+        patch("sys.argv", ["steam-manifest", "-a", "480"]),
+        patch("steam_manifest.cli.verify_steam_path") as mock_verify,
+        patch("steam_manifest.cli.HttpClient") as mock_client_class,
+        patch("steam_manifest.cli.ManifestStorage") as mock_storage_class,
+        patch("steam_manifest.cli.SteamApp") as mock_steam_class,
+        patch("steam_manifest.cli.GitHubRepo") as mock_github_class,
+    ):
         # Setup mocks
         mock_verify.return_value = MagicMock()
         mock_client = MagicMock()
@@ -159,13 +178,16 @@ async def test_main_with_valid_workflow():
 
         # Test async_main directly to avoid asyncio.run() nesting
         from steam_manifest.cli import async_main
+
         await async_main()
 
 
 def test_main_keyboard_interrupt():
     """Test main handles keyboard interrupt gracefully."""
-    with patch("sys.argv", ["steam-manifest", "-a", "480"]), \
-         patch("steam_manifest.cli.asyncio.run", side_effect=KeyboardInterrupt):
+    with (
+        patch("sys.argv", ["steam-manifest", "-a", "480"]),
+        patch("steam_manifest.cli.asyncio.run", side_effect=KeyboardInterrupt),
+    ):
         with pytest.raises(SystemExit) as exc_info:
             main()
         assert exc_info.value.code == 0

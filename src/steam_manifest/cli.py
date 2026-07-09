@@ -53,34 +53,39 @@ def show_banner() -> None:
 def init_command_args() -> Namespace:
     """初始化命令行参数"""
     import os
-    
+
     parser = ArgumentParser(description="🚀 Steam 清单文件获取工具 v" + VERSION)
     parser.add_argument(
         "-v", "--version", action="version", version=f"%(prog)s v{VERSION}"
     )
     parser.add_argument(
-        "-a", "--appid", 
+        "-a",
+        "--appid",
         help="🎮 Steam 应用ID或名称",
     )
     parser.add_argument(
-        "-k", "--key", 
+        "-k",
+        "--key",
         help="🔑 GitHub API 访问密钥 (环境变量: STEAM_MANIFEST_GITHUB_TOKEN)",
         default=os.getenv("STEAM_MANIFEST_GITHUB_TOKEN"),
     )
     parser.add_argument(
-        "-r", "--repo", 
+        "-r",
+        "--repo",
         help="📁 自定义 GitHub 仓库名称",
     )
     parser.add_argument(
-        "-f", "--fixed", 
-        action="store_true", 
+        "-f",
+        "--fixed",
+        action="store_true",
         help="📌 启用固定清单模式",
     )
+    steam_path_env = os.getenv("STEAM_MANIFEST_STEAM_PATH")
     parser.add_argument(
         "--steam-path",
         type=Path,
         help="🎮 Steam 安装路径 (环境变量: STEAM_MANIFEST_STEAM_PATH)",
-        default=Path(os.getenv("STEAM_MANIFEST_STEAM_PATH")) if os.getenv("STEAM_MANIFEST_STEAM_PATH") else None,
+        default=Path(steam_path_env) if steam_path_env else None,
     )
     # 日志控制参数
     parser.add_argument(
@@ -101,8 +106,9 @@ def init_command_args() -> Namespace:
     )
     # 保留 -d/--debug 作为快捷方式
     parser.add_argument(
-        "-d", "--debug", 
-        action="store_true", 
+        "-d",
+        "--debug",
+        action="store_true",
         help="🔍 调试模式 (等同于 --log-level DEBUG)",
     )
     return parser.parse_args()
@@ -138,12 +144,12 @@ async def async_main() -> None:
 
     # 初始化
     args = init_command_args()
-    
+
     # 配置日志系统
     log_level = "DEBUG" if args.debug else args.log_level
     console_enable = not args.no_log
     file_enable = not args.no_log
-    
+
     setup_logger(
         log_level=log_level,
         log_dir=args.log_dir,

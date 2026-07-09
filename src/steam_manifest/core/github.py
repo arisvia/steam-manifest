@@ -5,7 +5,6 @@ import time
 from pathlib import Path
 from typing import Any, cast
 
-from steam_manifest.core.loghelper import log
 from rich.progress import (
     BarColumn,
     Progress,
@@ -15,6 +14,7 @@ from rich.progress import (
 )
 
 from steam_manifest.core.constants import DEFAULT_REPOS, Files, Urls
+from steam_manifest.core.loghelper import log
 from steam_manifest.core.network import HttpClient
 from steam_manifest.core.storage import ManifestStorage
 

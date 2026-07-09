@@ -1,6 +1,7 @@
 """
 Pytest configuration and shared fixtures for steam-manifest tests.
 """
+
 import asyncio
 import sys
 from contextlib import suppress

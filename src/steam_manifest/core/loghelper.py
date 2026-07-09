@@ -57,9 +57,7 @@ def setup_logger(
     # 规范化日志级别
     normalized_level = str(log_level or "INFO").upper()
     if normalized_level not in VALID_LOG_LEVELS:
-        sys.stderr.write(
-            f"Invalid log level '{normalized_level}', fallback to INFO\n"
-        )
+        sys.stderr.write(f"Invalid log level '{normalized_level}', fallback to INFO\n")
         normalized_level = "INFO"
 
     # 移除默认处理器

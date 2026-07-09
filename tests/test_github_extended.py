@@ -3,8 +3,9 @@
 Covers find_repository(), fetch_repository_files(), process_files(), and API
 rate-limit handling (check_rate_limit) using pytest + unittest.mock + AsyncMock.
 """
+
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -18,7 +19,9 @@ from steam_manifest.core.storage import ManifestStorage
 # Helpers / fixtures
 # ---------------------------------------------------------------------------
 def make_branch_data(date="2023-01-01T00:00:00Z", tree_url="tree_url"):
-    return {"commit": {"commit": {"committer": {"date": date}, "tree": {"url": tree_url}}}}
+    return {
+        "commit": {"commit": {"committer": {"date": date}, "tree": {"url": tree_url}}}
+    }
 
 
 class DummyProgress:
@@ -190,10 +193,12 @@ async def test_find_repository_missing_commit_returns_none(gh, client):
 @pytest.mark.asyncio
 async def test_fetch_repository_files_success(gh, client):
     branch_data = make_branch_data(tree_url="https://api/tree_url")
-    tree_data = {"tree": [
-        {"path": "a.manifest", "type": "blob"},
-        {"path": "key.vdf", "type": "blob"},
-    ]}
+    tree_data = {
+        "tree": [
+            {"path": "a.manifest", "type": "blob"},
+            {"path": "key.vdf", "type": "blob"},
+        ]
+    }
 
     async def fake_get(url):
         if "branches" in url:
@@ -277,7 +282,9 @@ async def test_process_files_all_success(gh, client, storage, patch_progress, tm
 
 
 @pytest.mark.asyncio
-async def test_process_files_skips_directories(gh, client, storage, patch_progress, tmp_path):
+async def test_process_files_skips_directories(
+    gh, client, storage, patch_progress, tmp_path
+):
     """Tree-type entries are skipped (return True) without network calls."""
     client.raw_get.return_value = b"x"
     files = [{"path": "somedir", "type": "tree"}]
@@ -289,7 +296,9 @@ async def test_process_files_skips_directories(gh, client, storage, patch_progre
 
 
 @pytest.mark.asyncio
-async def test_process_files_unknown_type_is_skipped(gh, client, storage, patch_progress, tmp_path):
+async def test_process_files_unknown_type_is_skipped(
+    gh, client, storage, patch_progress, tmp_path
+):
     """Files that don't match manifest/vdf/config are ignored as success."""
     files = [{"path": "readme.md", "type": "blob"}]
     ok = await gh.process_files("repo", "branch", files, tmp_path)
@@ -298,7 +307,9 @@ async def test_process_files_unknown_type_is_skipped(gh, client, storage, patch_
 
 
 @pytest.mark.asyncio
-async def test_process_files_manifest_download_failure(gh, client, storage, patch_progress, tmp_path):
+async def test_process_files_manifest_download_failure(
+    gh, client, storage, patch_progress, tmp_path
+):
     """When raw_get returns None for a manifest, process_files reports failure."""
     client.raw_get.return_value = None
     files = [{"path": "480_abc.manifest", "type": "blob"}]
@@ -309,7 +320,9 @@ async def test_process_files_manifest_download_failure(gh, client, storage, patc
 
 
 @pytest.mark.asyncio
-async def test_process_files_save_manifest_failure(gh, client, storage, patch_progress, tmp_path):
+async def test_process_files_save_manifest_failure(
+    gh, client, storage, patch_progress, tmp_path
+):
     """When storage.save_manifest_file returns False, process_files reports failure."""
     client.raw_get.return_value = b"data"
     storage.save_manifest_file.return_value = False
@@ -320,7 +333,9 @@ async def test_process_files_save_manifest_failure(gh, client, storage, patch_pr
 
 
 @pytest.mark.asyncio
-async def test_process_files_vdf_appinfo_success(gh, client, storage, patch_progress, tmp_path):
+async def test_process_files_vdf_appinfo_success(
+    gh, client, storage, patch_progress, tmp_path
+):
     client.raw_get.return_value = b"vdf-content"
     files = [{"path": "appinfo.vdf", "type": "blob"}]
 
@@ -330,7 +345,9 @@ async def test_process_files_vdf_appinfo_success(gh, client, storage, patch_prog
 
 
 @pytest.mark.asyncio
-async def test_process_files_vdf_key_success(gh, client, storage, patch_progress, tmp_path):
+async def test_process_files_vdf_key_success(
+    gh, client, storage, patch_progress, tmp_path
+):
     client.raw_get.return_value = b"keys"
     files = [{"path": "key.vdf", "type": "blob"}]
 
@@ -340,17 +357,23 @@ async def test_process_files_vdf_key_success(gh, client, storage, patch_progress
 
 
 @pytest.mark.asyncio
-async def test_process_files_config_success(gh, client, storage, patch_progress, tmp_path):
+async def test_process_files_config_success(
+    gh, client, storage, patch_progress, tmp_path
+):
     client.get.return_value = {"dlcs": [1, 2], "packagedlcs": [3]}
     files = [{"path": "config.json", "type": "blob"}]
 
     ok = await gh.process_files("repo", "branch", files, tmp_path)
     assert ok is True
-    storage.parse_config_json.assert_awaited_once_with({"dlcs": [1, 2], "packagedlcs": [3]})
+    storage.parse_config_json.assert_awaited_once_with(
+        {"dlcs": [1, 2], "packagedlcs": [3]}
+    )
 
 
 @pytest.mark.asyncio
-async def test_process_files_config_none_returns_failure(gh, client, storage, patch_progress, tmp_path):
+async def test_process_files_config_none_returns_failure(
+    gh, client, storage, patch_progress, tmp_path
+):
     """When api_client.get returns None for config.json, _handle_config returns False."""
     client.get.return_value = None
     files = [{"path": "config.json", "type": "blob"}]
@@ -366,7 +389,9 @@ async def test_process_files_empty_list(gh, client, storage, patch_progress, tmp
 
 
 @pytest.mark.asyncio
-async def test_process_files_exception_in_single_file(gh, client, storage, patch_progress, tmp_path):
+async def test_process_files_exception_in_single_file(
+    gh, client, storage, patch_progress, tmp_path
+):
     """An exception inside _process_single_file is caught -> False, overall fails."""
     client.raw_get.side_effect = RuntimeError("download error")
     files = [{"path": "480_abc.manifest", "type": "blob"}]
@@ -376,7 +401,9 @@ async def test_process_files_exception_in_single_file(gh, client, storage, patch
 
 
 @pytest.mark.asyncio
-async def test_process_files_with_custom_semaphore(gh, client, storage, patch_progress, tmp_path):
+async def test_process_files_with_custom_semaphore(
+    gh, client, storage, patch_progress, tmp_path
+):
     """A caller-provided semaphore is used instead of creating a default."""
     client.raw_get.return_value = b"data"
     sem = asyncio.Semaphore(1)
@@ -391,7 +418,9 @@ async def test_process_files_with_custom_semaphore(gh, client, storage, patch_pr
 
 
 @pytest.mark.asyncio
-async def test_process_files_partial_failure(gh, client, storage, patch_progress, tmp_path):
+async def test_process_files_partial_failure(
+    gh, client, storage, patch_progress, tmp_path
+):
     """One failing file + one succeeding -> overall returns False."""
     call = {"n": 0}
 
@@ -413,7 +442,9 @@ async def test_process_files_partial_failure(gh, client, storage, patch_progress
 # _handle_manifest / _handle_vdf / _handle_config internals
 # ---------------------------------------------------------------------------
 @pytest.mark.asyncio
-async def test_handle_manifest_empty_content_returns_false(gh, client, storage, tmp_path):
+async def test_handle_manifest_empty_content_returns_false(
+    gh, client, storage, tmp_path
+):
     client.raw_get.return_value = None
     result = await gh._handle_manifest("repo", "branch", "480_x.manifest", tmp_path)
     assert result is False

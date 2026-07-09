@@ -1,10 +1,10 @@
 """Steam应用信息管理模块"""
 
-from steam_manifest.core.loghelper import log
 from rich.console import Console
 from rich.table import Table
 
 from steam_manifest.core.constants import Urls
+from steam_manifest.core.loghelper import log
 from steam_manifest.core.network import HttpClient
 
 

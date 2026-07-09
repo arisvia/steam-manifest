@@ -7,7 +7,6 @@ import aiohttp
 import orjson
 from aiohttp.resolver import AsyncResolver
 from cachetools import TTLCache
-from steam_manifest.core.loghelper import log
 from tenacity import (
     AsyncRetrying,
     RetryError,
@@ -28,6 +27,7 @@ from steam_manifest.core.constants import (
     RETRY_INTERVAL,
     RETRY_TIMES,
 )
+from steam_manifest.core.loghelper import log
 
 
 class HttpClient:

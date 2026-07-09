@@ -6,9 +6,9 @@ from typing import Any, cast
 
 import aiofiles
 import vdf
-from steam_manifest.core.loghelper import log
 
 from steam_manifest.core.constants import Steam
+from steam_manifest.core.loghelper import log
 
 
 class ManifestStorage:

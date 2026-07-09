@@ -6,12 +6,10 @@ method name; task spec called it get_app_details), batch_fetch_dlc_details(),
 clear(), and error/exception paths. Network calls are mocked via AsyncMock.
 """
 
-import pytest
 from unittest.mock import AsyncMock, patch
 
 from steam_manifest.core.constants import Urls
 from steam_manifest.core.steam import SteamApp
-
 
 # ---------------------------------------------------------------------------
 # Fixtures / helpers
@@ -74,10 +72,7 @@ async def test_search_app_single_result_auto_select():
 
 
 async def test_search_app_multi_result_valid_choice():
-    items = [
-        {"id": str(i), "name": f"Game{i}", "type": "game"}
-        for i in range(1, 4)
-    ]
+    items = [{"id": str(i), "name": f"Game{i}", "type": "game"} for i in range(1, 4)]
     client = make_client(get_return={"items": items})
     steam = SteamApp(client)
 
@@ -130,9 +125,7 @@ async def test_search_app_multi_result_keyboard_interrupt_then_valid():
 
 
 async def test_search_app_multi_result_more_than_ten_truncates():
-    items = [
-        {"id": str(i), "name": f"G{i}", "type": "game"} for i in range(15)
-    ]
+    items = [{"id": str(i), "name": f"G{i}", "type": "game"} for i in range(15)]
     client = make_client(get_return={"items": items})
     steam = SteamApp(client)
 
