@@ -31,6 +31,7 @@ dependencies = [
     "rich",
     "orjson",
     "tenacity",
+    "mypy",
 ]
 
 [project.optional-dependencies]
