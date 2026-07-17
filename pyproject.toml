@@ -95,3 +95,6 @@ minversion = "7.0"
 addopts = "-ra -q --cov=steam_manifest --cov-report=term-missing"
 testpaths = ["tests"]
 asyncio_mode = "auto"
+filterwarnings = [
+    "ignore:coroutine 'async_main' was never awaited:RuntimeWarning",
+]
