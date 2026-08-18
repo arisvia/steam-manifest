@@ -23,6 +23,5 @@ repos:
       - id: mypy
         files: ^src/
         additional_dependencies:
-          - types-aiofiles
           - types-cachetools
           - types-setuptools

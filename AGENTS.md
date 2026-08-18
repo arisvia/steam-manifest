@@ -27,7 +27,7 @@ This is an asynchronous Python CLI tool for retrieving Steam manifest files from
     - Manages rate limits and repository traversal.
 - **`src/steam_manifest/core/storage.py`**: Handles file I/O and parsing (`ManifestStorage`).
     - **Pattern**: Offloads CPU-bound VDF/JSON parsing to thread pool executor to avoid blocking the event loop.
-    - **Key Libs**: `vdf` (Valve Data Format), `orjson`, `aiofiles`.
+    - **Key Libs**: `vdf` (Valve Data Format), `orjson`, `asyncio.to_thread`.
 - **`src/steam_manifest/core/constants.py`**: Centralized configuration (`Urls`, `Files`, `Steam` classes) and
   constants.
 

@@ -11,7 +11,7 @@ target the real API.
 
 import asyncio
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -83,11 +83,7 @@ async def test_save_manifest_file_returns_false_on_write_error(tmp_path):
     storage = ManifestStorage()
     path = "444_err.manifest"
 
-    # 模拟 aiofiles.open 写入抛错（磁盘满/IO 错误的等价物）
-    mock_cm = AsyncMock()
-    mock_cm.__aenter__.side_effect = OSError("disk full")
-    mock_cm.__aexit__.return_value = False
-    with patch("steam_manifest.core.storage.aiofiles.open", return_value=mock_cm):
+    with patch.object(Path, "write_bytes", side_effect=OSError("disk full")):
         ok = await storage.save_manifest_file(path, tmp_path, b"x")
 
     assert ok is False
@@ -206,10 +202,7 @@ async def test_save_lua_config_returns_false_on_write_error(tmp_path):
     storage = ManifestStorage()
     storage.depots = {1: "k"}
 
-    mock_cm = AsyncMock()
-    mock_cm.__aenter__.side_effect = OSError("io error")
-    mock_cm.__aexit__.return_value = False
-    with patch("steam_manifest.core.storage.aiofiles.open", return_value=mock_cm):
+    with patch.object(Path, "write_text", side_effect=OSError("io error")):
         ok = await storage.save_lua_config("9", None, tmp_path)
 
     assert ok is False

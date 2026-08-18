@@ -23,7 +23,6 @@ classifiers = [
     "Topic :: Games/Entertainment",
 ]
 dependencies = [
-    "aiofiles",
     "aiohttp[speedups]",
     "cachetools",
     "vdf",
@@ -31,7 +30,6 @@ dependencies = [
     "rich",
     "orjson",
     "tenacity",
-    "mypy",
 ]
 
 [project.optional-dependencies]
@@ -42,7 +40,6 @@ dev = [
     "pytest-asyncio",
     "pytest-cov",
     "ruff",
-    "types-aiofiles",
     "types-cachetools",
 ]
 
@@ -54,11 +51,8 @@ Homepage = "https://github.com/arisvia/steam-manifest"
 Repository = "https://github.com/arisvia/steam-manifest"
 Issues = "https://github.com/arisvia/steam-manifest/issues"
 
-[tool.setuptools]
-packages = ["steam_manifest", "steam_manifest.core"]
-
-[tool.setuptools.package-dir]
-"" = "src"
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.setuptools.package-data]
 steam_manifest = ["assets/*.ico", "py.typed"]
@@ -77,6 +71,10 @@ warn_redundant_casts = true
 warn_unreachable = true
 pretty = true
 show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = "vdf"
+ignore_missing_imports = true
 
 [tool.ruff]
 target-version = "py312"

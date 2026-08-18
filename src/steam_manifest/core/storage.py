@@ -4,7 +4,6 @@ import asyncio
 from pathlib import Path
 from typing import Any, cast
 
-import aiofiles
 import vdf
 
 from steam_manifest.core.constants import Steam
@@ -131,8 +130,7 @@ class ManifestStorage:
 
             # 异步写入到临时文件
             temp_path = save_path.with_suffix(".tmp")
-            async with aiofiles.open(temp_path, "wb") as f:
-                await f.write(content)
+            await asyncio.to_thread(temp_path.write_bytes, content)
 
             # 原子替换
             temp_path.replace(save_path)
@@ -191,8 +189,9 @@ class ManifestStorage:
             lua_filepath = lua_path / lua_filename
 
             temp_filepath = lua_filepath.with_suffix(".tmp")
-            async with aiofiles.open(temp_filepath, "w", encoding="utf-8") as f:
-                await f.write(lua_content)
+            await asyncio.to_thread(
+                temp_filepath.write_text, lua_content, encoding="utf-8"
+            )
 
             temp_filepath.replace(lua_filepath)
             log.info(f"📝 配置已保存至: {lua_filepath}")
